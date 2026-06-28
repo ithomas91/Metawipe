@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="hu">
+<head>
+<meta charset="utf-8">
+<title>metawipe — metaadat-eltávolító</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="css/style.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="wordmark">metawipe</div>
+  <nav class="tabs">
+    <button class="tab active" data-tab="tool">Tisztító</button>
+    <button class="tab" data-tab="api">API</button>
+  </nav>
+</header>
+
+<main>
+
+<section id="tool-panel" class="panel active">
+  <p class="lede">GPS, kameraadatok, IPTC, XMP és ICC profil eltávolítása képekből. A feldolgozás a böngésződben fut — a fájl nem kerül fel semmilyen szerverre.</p>
+
+  <div id="dropzone" class="dropzone">
+    <p class="prompt mono"># húzd ide a képet, vagy</p>
+    <label class="filepick">
+      válassz fájlt
+      <input type="file" id="fileInput" accept="image/jpeg,image/png" multiple hidden>
+    </label>
+    <p class="hint">JPEG, PNG &middot; több fájl is kijelölhető &middot; max. 30&nbsp;MB / fájl</p>
+  </div>
+
+  <div id="globalOptions" class="options hidden">
+    <label class="check"><input type="checkbox" id="optKeepCopyright"> Copyright mező megtartása</label>
+    <label class="check"><input type="checkbox" id="optKeepArtist"> Készítő (Artist) mező megtartása</label>
+    <button id="stripAllBtn" class="btn primary" disabled>Összes tisztítása</button>
+  </div>
+
+  <div id="queue" class="queue"></div>
+</section>
+
+<section id="api-panel" class="panel">
+  <p class="lede">Ugyanaz a tisztítás, REST API-n keresztül — automatizáláshoz, batch feldolgozáshoz, szerver oldali integrációhoz.</p>
+
+  <div class="note">
+    <strong>Más bizalmi szint, tudatosan.</strong> A fenti Tisztító fül soha nem hívja ezt az API-t — minden alapból a böngésződben marad. Ha ezt az API-t hívod, a fájl elhagyja az eszközödet és felmegy a szerverre. A feldolgozás memóriában történik, semmi nem kerül lemezre vagy logba, de ez egy explicit, más döntés, mint a kliens-oldali eszköz használata.
+  </div>
+
+  <div class="endpoint">
+    <div class="endpoint-head"><span class="method">GET</span><span class="path">/api/v1/health</span></div>
+    <div class="endpoint-desc">Életjel-ellenőrzés. Visszaadja a futó API verzióját.</div>
+  </div>
+
+  <div class="endpoint">
+    <div class="endpoint-head"><span class="method">POST</span><span class="path">/api/v1/inspect</span></div>
+    <div class="endpoint-desc">
+      Visszaadja, milyen metaadatot talált a feltöltött képben — törlés nélkül.
+      <table>
+        <tr><td>file</td><td>multipart/form-data, kötelező &mdash; a kép (JPEG vagy PNG)</td></tr>
+        <tr><td>válasz</td><td>JSON: camera, gps, has_icc_profile, has_xmp, iptc, has_thumbnail, &hellip;</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="endpoint">
+    <div class="endpoint-head"><span class="method">POST</span><span class="path">/api/v1/strip</span></div>
+    <div class="endpoint-desc">
+      Egy fájl megtisztítása. Alapból minden metaadatot töröl.
+      <table>
+        <tr><td>file</td><td>multipart/form-data, kötelező</td></tr>
+        <tr><td>keep_copyright</td><td>"true" / "false" (alapérték: false) &mdash; megtartja a Copyright mezőt, ha van</td></tr>
+        <tr><td>keep_artist</td><td>"true" / "false" (alapérték: false) &mdash; megtartja a Készítő/Artist mezőt, ha van</td></tr>
+        <tr><td>válasz</td><td>a megtisztított fájl bináris tartalma (image/jpeg vagy image/png)</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="endpoint">
+    <div class="endpoint-head"><span class="method">POST</span><span class="path">/api/v1/strip/batch</span></div>
+    <div class="endpoint-desc">
+      Több fájl egyszerre. Ugyanazok az opciók, mint a /strip végpontnál.
+      <table>
+        <tr><td>files</td><td>multipart/form-data, több fájl, ugyanazon a mezőnéven (files)</td></tr>
+        <tr><td>válasz</td><td>ZIP, fájlonként a megtisztított verzióval</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="code-block">
+    <div class="code-tabs">
+      <button class="code-tab active" data-lang="curl">curl</button>
+      <button class="code-tab" data-lang="python">Python</button>
+      <button class="code-tab" data-lang="js">JavaScript</button>
+      <button class="code-tab" data-lang="php">PHP</button>
+    </div>
+
+    <div class="code-panel active" data-lang="curl">
+      <button class="copy-btn">Másolás</button>
+      <pre>curl -X POST <span class="base-url"></span>/api/v1/strip \
+  -F "file=@photo.jpg" \
+  -F "keep_copyright=true" \
+  -o photo_clean.jpg</pre>
+    </div>
+
+    <div class="code-panel" data-lang="python">
+      <button class="copy-btn">Másolás</button>
+      <pre>import requests
+
+with open("photo.jpg", "rb") as f:
+    r = requests.post(
+        "<span class="base-url"></span>/api/v1/strip",
+        files={"file": f},
+        data={"keep_copyright": "true"},
+    )
+
+with open("photo_clean.jpg", "wb") as out:
+    out.write(r.content)</pre>
+    </div>
+
+    <div class="code-panel" data-lang="js">
+      <button class="copy-btn">Másolás</button>
+      <pre>const form = new FormData();
+form.append("file", fileInput.files[0]);
+form.append("keep_copyright", "true");
+
+const res = await fetch("<span class="base-url"></span>/api/v1/strip", {
+  method: "POST",
+  body: form,
+});
+const cleanBlob = await res.blob();</pre>
+    </div>
+
+    <div class="code-panel" data-lang="php">
+      <button class="copy-btn">Másolás</button>
+      <pre>&lt;?php
+$ch = curl_init("<span class="base-url"></span>/api/v1/strip");
+curl_setopt($ch, CURLOPT_POST, true);
+curl_setopt($ch, CURLOPT_POSTFIELDS, [
+    "file" =&gt; new CURLFile("photo.jpg"),
+    "keep_copyright" =&gt; "true",
+]);
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+$clean = curl_exec($ch);
+file_put_contents("photo_clean.jpg", $clean);</pre>
+    </div>
+  </div>
+
+  <p class="hint" style="margin-top:18px;">Az <code class="mono">/api/v1/inspect</code> ugyanígy hívható, csak a végpont és a visszakapott JSON válasz más. Batch-hez (<code class="mono">/api/v1/strip/batch</code>) a <code class="mono">file</code> mező helyett több <code class="mono">files</code> mezőt küldj.</p>
+</section>
+
+</main>
+
+<footer>
+  <p>metawipe &middot; nyílt forrású privacy eszköz &middot; GPS / EXIF / IPTC / XMP / ICC eltávolítás kép-fájlokból</p>
+</footer>
+
+<script src="vendor/piexif.js"></script>
+<script src="vendor/jszip.min.js"></script>
+<script src="js/metadata-reader.js"></script>
+<script src="js/metadata-stripper.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
