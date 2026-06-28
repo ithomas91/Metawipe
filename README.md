@@ -31,35 +31,6 @@ A `frontend/` mappa önmagában, backend nélkül is megnyitható (pl. egy
 statikus host-on) — ekkor csak a Tisztító fül funkcionál, az API
 dokumentáció URL-jei a saját origin-t fogják mutatni, üresen, amíg nincs
 hova hívni őket.
-
-## Funkciók, amiket a hasonló (kép-only, all-or-nothing) eszközök
-többnyire kihagynak
-
-- **Szelektív megtartás**: nem csak "törölj mindent" — a Copyright és/vagy
-  Artist mező megtartható, miközben GPS/eszköz/szoftver adat törlődik.
-- **"Mit találtunk" előnézet** törlés előtt, mezőnként (GPS térkép-linkkel,
-  IPTC creator/copyright/caption, beágyazott thumbnail jelzése — ez utóbbi
-  azért fontos, mert sok eszköz a fő EXIF-et törli, de a kép belsejébe
-  ágyazott előnézeti kép régi EXIF-jét otthagyja).
-- **Batch mód + ZIP letöltés**, kliens oldalon is.
-- **Fejlesztői REST API**, ugyanazzal a logikával, élő, futtatható kód-
-  példákkal a böngészőben.
-
-## Roadmap (nincs benne ebben az MVP-ben)
-
-- Videó (MP4/MOV — QuickTime GPS atom), audio (ID3/Vorbis comment),
-  PDF és Office dokumentum (DOCX/XLSX/PPTX) támogatás.
-- HEIC/HEIF, WebP, RAW formátumok.
-- Böngésző-extension csomagolás ("jobb klikk → tisztítás" feltöltés előtt).
-
-## Egy tudatos döntés a C2PA / AI-eredet jelölésről
-
-Ez az eszköz a **személyes adatokat** (GPS, eszköznév, szoftver, IPTC)
-távolítja el — ez nem törli, és nem áll szándékában törölni, a C2PA
-Content Credentials / AI-eredet jelölést. Ez utóbbi más kategória:
-annak eltávolítása megtévesztésre használható (AI-tartalom emberi
-alkotásként feltüntetése), ezért ez tudatosan nincs a feature-listán.
-
 ---
 
 ## Részletes API leírás (magyar)
