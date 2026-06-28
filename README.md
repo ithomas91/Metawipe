@@ -1,4 +1,4 @@
-# metawipe
+# Metawipe
 
 Privacy eszköz: GPS, kamera/eszköz adatok, IPTC, XMP és ICC metaadatok
 eltávolítása JPEG/PNG képekből.
